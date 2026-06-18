@@ -131,13 +131,12 @@
         let timeLeft = 10;
         let countdownInterval = null;
         let wakeLock = null;
-
-        // Audio Context setup (Synthesizes a clean beep without needing external audio assets)
         let audioCtx = null;
+
+        // Clean synthesized audio signal
         function playSignal() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+            if (!audioCtx) return; 
+            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             
@@ -171,6 +170,7 @@
             }
         }
 
+        // Release Lock
         function releaseWakeLock() {
             if (wakeLock !== null) {
                 wakeLock.release();
@@ -182,7 +182,15 @@
         function startTimer() {
             if (countdownInterval) return;
 
-            // Trigger Wake Lock to keep Android 17 awake and processing
+            // Initialize audio context directly inside user click handler to satisfy browser policy
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // Trigger Wake Lock to bypass background processing rules
             requestWakeLock();
 
             startBtn.disabled = true;
@@ -194,7 +202,7 @@
 
                 if (timeLeft <= 0) {
                     playSignal();
-                    timeLeft = 10; // Reset interval loop
+                    timeLeft = 10; 
                     display.textContent = timeLeft;
                 }
             }, 1000);
@@ -209,7 +217,6 @@
             startBtn.disabled = false;
             stopBtn.disabled = true;
 
-            // Release lock to save user battery when timer is paused
             releaseWakeLock();
         }
 
@@ -217,7 +224,7 @@
         startBtn.addEventListener('click', startTimer);
         stopBtn.addEventListener('click', stopTimer);
 
-        // Re-request lock if browser is minimized and brought back to the foreground
+        // Re-request lock if browser minimizes and restores
         document.addEventListener('visibilitychange', async () => {
             if (wakeLock !== null && document.visibilityState === 'visible') {
                 await requestWakeLock();
