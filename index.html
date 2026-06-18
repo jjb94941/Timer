@@ -3,21 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer</title>
+    <title>Coffee Interval Timer</title>
+    <style>
+        :root {
+            --espresso: #36221c;
+            --latte: #c8ad93;
+            --cream: #f4eae1;
+            --accent: #8b5a2b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--cream);
+            color: var(--espresso);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(54, 34, 28, 0.15);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid var(--latte);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--espresso);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .timer-display {
+            font-size: 64px;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: var(--espresso);
+            color: var(--cream);
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--accent);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: var(--latte);
+            cursor: not-allowed;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 20px;
+            background-color: #e2e8f0;
+            color: #64748b;
+        }
+
+        .status-badge.active {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+    </style>
 </head>
 <body>
 
+    <div class="container">
+        <h1>☕ Coffee Timer</h1>
+        <p>Sounds a signal every 10 seconds.</p>
+        
+        <div class="timer-display" id="display">10</div>
+        
+        <div class="controls">
+            <button id="startBtn">Start</button>
+            <button id="stopBtn" disabled>Stop</button>
+        </div>
+
+        <div id="lockStatus" class="status-badge">Screen Lock: Inactive</div>
+    </div>
+
     <script>
+        // DOM Elements
+        const display = document.getElementById('display');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const lockStatus = document.getElementById('lockStatus');
+
+        // State Variables
+        let timeLeft = 10;
+        let countdownInterval = null;
         let wakeLock = null;
 
+        // Audio Context setup (Synthesizes a clean beep without needing external audio assets)
+        let audioCtx = null;
+        function playSignal() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Screen Wake Lock Logic
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('Screen Wake Lock active.');
+                    lockStatus.textContent = "Screen Lock: Active";
+                    lockStatus.classList.add('active');
                     
                     wakeLock.addEventListener('release', () => {
-                        console.log('Screen Wake Lock released.');
+                        lockStatus.textContent = "Screen Lock: Inactive";
+                        lockStatus.classList.remove('active');
                     });
                 }
             } catch (err) {
@@ -32,7 +178,52 @@
             }
         }
 
-        // Hook these functions into your UI event listeners here
+        // Timer Execution
+        function startTimer() {
+            if (countdownInterval) return;
+
+            // Trigger Wake Lock to keep Android 17 awake and processing
+            requestWakeLock();
+
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                display.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    playSignal();
+                    timeLeft = 10; // Reset interval loop
+                    display.textContent = timeLeft;
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            timeLeft = 10;
+            display.textContent = timeLeft;
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+
+            // Release lock to save user battery when timer is paused
+            releaseWakeLock();
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startTimer);
+        stopBtn.addEventListener('click', stopTimer);
+
+        // Re-request lock if browser is minimized and brought back to the foreground
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
     </script>
+
 </body>
 </html>
