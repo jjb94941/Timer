@@ -1,131 +1,3 @@
-
-Gemini
-New chat
-Search chats
-Daily brief
-Images
-New
-Videos
-Library
-Gems
-New notebook
-OM System OM-5 Mark II
-Manuals
-All notebooks
-Android 17 Background Audio Bug Fix
-AI Cybersecurity: Personal and Institutional Protection
-African Travel Vaccinations and Precautions
-Change Google Wallet Default Card
-Hide App Labels on Android 17
-Acupuncture: Uses, Safety, and Mechanism
-Accessible Luxury North American Travel
-US Debt Crisis Likelihood Explained
-Setting Persistent Gemini Instructions
-Malaria Risk for African Safari
-Stop Antivirus Hijacking Chrome Settings
-Enable WhatsApp Read Receipts
-Protecting Retirement from Economic Crisis
-Shuffle Classical Music Movements Intact
-BASE Jumping Acronym Explained
-Hello Beautiful: Plot and Themes Explained
-Oven Not Reaching Target Temperature
-Real Story Behind Song Sung Blue
-Finding Albums in Google Photos
-Apple TV Subtitles Stuck On
-Creative Halloumi Waffles with Tomato Ragout
-Accessing and Managing Google Workspace
-Back Pain: Exploring Alternative Treatments
-Recover Lost Chrome Tabs After Restart
-Vegetable Rice Broth Recipe
-Battery Widget Not Displaying Devices
-Fixing Plex Ghost Server Issues
-Point Reyes Hike Elevation Estimate
-Comedy Movies on Streaming Services
-Hot Weather Marin Hike Recommendations
-App Modification for Google Apps
-Email Sent To Wrong Person
-Light Adjustable Lens Explained Simply
-Hypnotism: Greek Myth to Medicine
-Botswana Prince's Love Story
-Stop Fake Antivirus Popups
-Donating Cabinet Saw to Trade Schools
-Sagrada Familia Completion Timeline Update
-Pene Pati's Metropolitan Opera Return
-The Gunman: First 45 Minutes Summary
-Calculating Half-Life at New Address
-Plex Server Unreachable: Troubleshooting and Data Location
-Light Adjustable Lens UV Exposure Risks
-Turn Off Pixel Call Screening
-Hebrew Birthday Greetings
-Pixel Battery Drain Bug Fixes
-Document Transcription and Property Description
-Condominium Unit Improvements and Features
-Camera Backpack Needs Assessment
-Nerve Ablation Pain Relief Timeline
-Specialist, Not Socialist: Clarification
-Accessing Camera Files on Android
-iPhone Google Photos Editing Issues Explained
-Mirroring Phone Screen to TV
-Override Windows App Installation Block
-AT&T International Roaming Explained
-Chameleon Photography Tips and Gear
-Netflix F1 Broadcast Rights Explained
-Ferrari 250 GTO Sale Prices
-Identifying the NIO EP9 Supercar
-Ferrari Daytona SP3 Identification
-Stop Android App Suggestions on Dock
-Embarrassing Moment, What Happened?
-Pixel Fold Battery Drain Diagnosis
-Turn Off Android Motion Photos/Top Shot
-Pixel Phone Feature Guide
-Composer Recommendations For Classical Music Lovers
-Graduation Gift Ideas for Acquaintances
-Five-Letter Words With Two Letters
-Fixing Roboform Master Password Sync Conflict
-Camera Backup With Android Phone
-Recovering Lost Chrome Tabs
-Greek God Pan: Myths and Origins
-Conversation with Gemini
-I've installed Android 17 on my pixel pro fold and I've noticed a bug. I have an app running that sounds a signal 10 seconds and it works fine until the phone display turns off and then the interval alarm stops. This is different from the way the pry version of Android worked and I believe is a bug. Can you advise?
-
-You are entirely correct—this is a newly introduced platform change rather than an isolated glitch.
-
-Android 17 introduces a major security feature called Background Audio Hardening. This feature is designed to prevent apps from unexpectedly hijacking audio, playing unauthorized tracking signals, or making noise when the user isn't actively engaging with them.  
-www.androidauthority.com
-+ 1
-
-The Core Change
-Starting in Android 17, the operating system strictly enforces audio restrictions on background apps.  
-bleadvertiserapp.medium.com
-
-The Rule: Any app attempting background audio interactions (including playing short beeps, interval alerts, or managing audio focus) must either have an active, visible UI on the screen or be running a proper foreground service (not a temporary SHORT_SERVICE).
-
-The Penalty: If the app does not meet these criteria, the system silently suppresses the audio playback. It will not crash the app, but no sound will emit once the display turns off and the activity loses focus.  
-developer.android.com
-
-Why previous versions worked
-In earlier versions of Android, an app could wake up the CPU briefly using standard exact alarms (AlarmManager) or background timers to play a notification tone or sound file even when the screen was completely dark. Android 17 now blocks the audio framework layer itself if a visible UI or appropriate foreground service isn't detected.  
-developer.android.com
-
-How to fix it
-If this is an app you are developing or an open-source app you can modify, the behavior can be resolved by updating its architecture:
-
-Implement a Media Playback Foreground Service: The app must launch a dedicated foreground service (like Jetpack Media3's MediaSessionService) while it is still open and visible to the user.
-
-Obtain While-In-Use (WIU) Capabilities: Ensure the foreground service is initialized from a visible activity context before the user minimizes the app or locks the screen.
-
-If this is a third-party app from the Play Store, you will need to wait for the developer to push an update targeting Android 17 background audio guidelines, or keep your screen awake while using it for the time being.
-
-can you fix it for me? the app is at https://jjb94941.github.io/Timer/
-
-I cannot directly edit your files or commit code to your GitHub repository for you, but I can provide the exact fix to apply to your code.
-
-The issue is that mobile browsers (like Chrome on Android) aggressively throttle or completely freeze JavaScript timers (setInterval or setTimeout) the moment the device display turns off or the tab loses focus to save battery.
-
-Since this is a web app, you can resolve this using the Screen Wake Lock API. This forces the browser to keep the screen on and prevents the OS from entering a low-power sleep state while your timer is actively running.
-
-Here is the JavaScript code you can integrate into your timer's start/stop logic:
-
 JavaScript
 let wakeLock = null;
 
@@ -313,7 +185,7 @@ HTML
   <div class="setting-block orange-setting">
     <div class="setting-header"><div class="dot dot-orange"></div><span class="setting-label">Loud alarm every</span></div>
     <div class="input-row">
-      <input type="range" id="slider-long" min="10" max="600" value="40" step="10"/>
+      <input type="range" id="slider-long" min="10" max="600" value="70" step="10"/>
       <span id="sliderout-long">70s</span>
       <input type="number" id="num-long" min="1" max="7200" value="70"/>
       <span>sec</span>
@@ -861,6 +733,4 @@ HTML
       cycleDisplay.textContent = 'cycle ' + longCount;
 
 
-
-Gemini is AI and can make mistakes.
 
