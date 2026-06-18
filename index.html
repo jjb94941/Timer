@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee Interval Timer</title>
+    <title>Interval Timer</title>
     <style>
         :root {
             --bg-color: #f7ede2;
@@ -97,6 +97,22 @@
             color: #a09080;
             cursor: not-allowed;
         }
+        .display input {
+            width: 100%;
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--secondary-color);
+            text-align: center;
+            outline: none;
+            line-height: 1;
+            -moz-appearance: textfield;
+        }
+        .display input::-webkit-outer-spin-button,
+        .display input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .display input:focus { border-bottom-color: var(--primary-color); }
         .status-pill {
             display: inline-block;
             background-color: #e8eef5;
@@ -111,17 +127,17 @@
 <body>
 
 <div class="card">
-    <h1>☕ Coffee Timer</h1>
-    <div class="description">Beeps every 10s. Alarm at 70s.</div>
+    <h1>⏱ Interval Timer</h1>
+    <div class="description">Tap the numbers to change them.</div>
 
     <div class="timer-container">
         <div class="timer-box">
-            <div class="timer-label">Total Time</div>
-            <div id="longDisplay" class="display">70</div>
+            <div class="timer-label">Total Time (s)</div>
+            <div class="display"><input id="longDisplay" type="number" value="70" min="1"></div>
         </div>
         <div class="timer-box">
-            <div class="timer-label">Interval</div>
-            <div id="shortDisplay" class="display">10</div>
+            <div class="timer-label">Interval (s)</div>
+            <div class="display"><input id="shortDisplay" type="number" value="10" min="1"></div>
         </div>
     </div>
 
@@ -140,15 +156,17 @@
     let totalSeconds   = 0;
     let timerInterval  = null;
     let wakeLock       = null;
+    let LONG_VAL       = DEFAULT_LONG;
+    let SHORT_VAL      = DEFAULT_SHORT;
 
     let audioCtx       = null;
-    let silentSource   = null;   // looping silent node — keeps AudioContext alive on Android
+    let silentSource   = null;
 
-    const startBtn    = document.getElementById('startBtn');
-    const stopBtn     = document.getElementById('stopBtn');
-    const longDisplay = document.getElementById('longDisplay');
-    const shortDisplay= document.getElementById('shortDisplay');
-    const statusPill  = document.getElementById('statusPill');
+    const startBtn     = document.getElementById('startBtn');
+    const stopBtn      = document.getElementById('stopBtn');
+    const longInput    = document.getElementById('longDisplay');
+    const shortInput   = document.getElementById('shortDisplay');
+    const statusPill   = document.getElementById('statusPill');
 
     // ── Audio ──────────────────────────────────────────────────────────────────
 
@@ -260,10 +278,10 @@
     // ── Display ────────────────────────────────────────────────────────────────
 
     function updateDisplays() {
-        const remaining = Math.max(0, DEFAULT_LONG - totalSeconds);
-        const interval  = remaining === 0 ? 0 : DEFAULT_SHORT - (totalSeconds % DEFAULT_SHORT);
-        longDisplay.textContent  = remaining;
-        shortDisplay.textContent = interval;
+        const remaining = Math.max(0, LONG_VAL - totalSeconds);
+        const interval  = remaining === 0 ? 0 : SHORT_VAL - (totalSeconds % SHORT_VAL);
+        longInput.value  = remaining;
+        shortInput.value = interval;
     }
 
     function setStatus(msg) {
@@ -276,7 +294,7 @@
         totalSeconds++;
         updateDisplays();
 
-        const remaining = DEFAULT_LONG - totalSeconds;
+        const remaining = LONG_VAL - totalSeconds;
 
         if (remaining <= 0) {
             playAlarm();
@@ -285,14 +303,18 @@
             return;
         }
 
-        if (totalSeconds % DEFAULT_SHORT === 0) {
+        if (totalSeconds % SHORT_VAL === 0) {
             playBeep();
         }
     }
 
     function startTimer() {
+        LONG_VAL  = Math.max(1, parseInt(longInput.value)  || DEFAULT_LONG);
+        SHORT_VAL = Math.max(1, parseInt(shortInput.value) || DEFAULT_SHORT);
+        longInput.disabled  = true;
+        shortInput.disabled = true;
+
         initAudio();
-        // AudioContext must be resumed from a user-gesture handler
         audioCtx.resume().then(() => {
             startSilentLoop();
             requestWakeLock();
@@ -314,6 +336,11 @@
 
         stopSilentLoop();
         releaseWakeLock();
+
+        longInput.disabled  = false;
+        shortInput.disabled = false;
+        longInput.value     = LONG_VAL;
+        shortInput.value    = SHORT_VAL;
 
         startBtn.disabled = false;
         stopBtn.disabled  = true;
