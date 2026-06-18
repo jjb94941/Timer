@@ -6,231 +6,270 @@
     <title>Coffee Interval Timer</title>
     <style>
         :root {
-            --espresso: #36221c;
-            --latte: #c8ad93;
-            --cream: #f4eae1;
-            --accent: #8b5a2b;
+            --bg-color: #f7ede2;
+            --card-bg: #ffffff;
+            --primary-color: #3d241d;
+            --secondary-color: #c6ac8f;
+            --text-main: #654321;
+            --text-muted: #5e6472;
         }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--cream);
-            color: var(--espresso);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
             margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(54, 34, 28, 0.15);
+        .card {
+            background: var(--card-bg);
+            padding: 2.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             text-align: center;
             max-width: 400px;
-            width: 100%;
-            border: 2px solid var(--latte);
+            width: 90%;
         }
-
         h1 {
-            margin-top: 0;
-            color: var(--espresso);
-            font-size: 24px;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin: 0 0 0.5rem 0;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
         }
-
-        .timer-display {
-            font-size: 64px;
-            font-weight: bold;
-            color: var(--accent);
-            margin: 20px 0;
-            font-variant-numeric: tabular-nums;
+        .description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
         }
-
+        .timer-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+        }
+        .timer-box {
+            flex: 1;
+        }
+        .timer-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+            line-height: 1;
+        }
         .controls {
             display: flex;
-            gap: 10px;
             justify-content: center;
-            margin-top: 20px;
+            gap: 15px;
+            margin-bottom: 1.5rem;
         }
-
         button {
-            background-color: var(--espresso);
-            color: var(--cream);
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: bold;
             border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s;
         }
-
-        button:hover {
-            background-color: var(--accent);
+        #startBtn {
+            background-color: var(--primary-color);
+            color: white;
         }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:disabled {
-            background-color: var(--latte);
+        #startBtn:disabled {
+            background-color: var(--secondary-color);
             cursor: not-allowed;
         }
-
-        .status-badge {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 20px;
-            background-color: #e2e8f0;
-            color: #64748b;
+        #stopBtn {
+            background-color: var(--secondary-color);
+            color: white;
         }
-
-        .status-badge.active {
-            background-color: #dcfce7;
-            color: #15803d;
+        #stopBtn:disabled {
+            background-color: #e0d0c0;
+            color: #a09080;
+            cursor: not-allowed;
+        }
+        .status-pill {
+            display: inline-block;
+            background-color: #e8eef5;
+            color: #557093;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>☕ Coffee Timer</h1>
-        <p>Sounds a signal every 10 seconds.</p>
-        
-        <div class="timer-display" id="display">10</div>
-        
-        <div class="controls">
-            <button id="startBtn">Start</button>
-            <button id="stopBtn" disabled>Stop</button>
+<div class="card">
+    <h1>☕ Coffee Timer</h1>
+    <div class="description">Beeps every 10s. Alarm at 70s.</div>
+    
+    <div class="timer-container">
+        <div class="timer-box">
+            <div class="timer-label">Total Time</div>
+            <div id="longDisplay" class="display">70</div>
         </div>
-
-        <div id="lockStatus" class="status-badge">Screen Lock: Inactive</div>
+        <div class="timer-box">
+            <div class="timer-label">Interval</div>
+            <div id="shortDisplay" class="display">10</div>
+        </div>
     </div>
 
-    <script>
-        // DOM Elements
-        const display = document.getElementById('display');
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const lockStatus = document.getElementById('lockStatus');
+    <div class="controls">
+        <button id="startBtn">Start</button>
+        <button id="stopBtn" disabled>Stop</button>
+    </div>
 
-        // State Variables
-        let timeLeft = 10;
-        let countdownInterval = null;
-        let wakeLock = null;
-        let audioCtx = null;
+    <div id="wakeLockStatus" class="status-pill">Screen Lock: Inactive</div>
+</div>
 
-        // Clean synthesized audio signal
-        function playSignal() {
-            if (!audioCtx) return; 
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+<script>
+    let totalSeconds = 0;
+    let timerInterval = null;
+    let wakeLock = null;
+
+    const DEFAULT_LONG = 70;
+    const DEFAULT_SHORT = 10;
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const longDisplay = document.getElementById('longDisplay');
+    const shortDisplay = document.getElementById('shortDisplay');
+    const wakeLockStatus = document.getElementById('wakeLockStatus');
+
+    // Web Audio API Context
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
+    }
 
-        // Screen Wake Lock Logic
-        async function requestWakeLock() {
+    function playSound(frequency, duration, type = 'sine') {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.type = type;
+        osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playBeep() {
+        playSound(880, 0.15, 'sine'); // Short high pitch beep
+    }
+
+    function playAlarm() {
+        // Continuous dual-tone sound for the final alarm
+        playSound(660, 0.6, 'triangle');
+        setTimeout(() => playSound(880, 0.8, 'triangle'), 200);
+    }
+
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
             try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    lockStatus.textContent = "Screen Lock: Active";
-                    lockStatus.classList.add('active');
-                    
-                    wakeLock.addEventListener('release', () => {
-                        lockStatus.textContent = "Screen Lock: Inactive";
-                        lockStatus.classList.remove('active');
-                    });
-                }
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLockStatus.textContent = 'Screen Lock: Active';
+                wakeLockStatus.style.backgroundColor = '#e2f0d9';
+                wakeLockStatus.style.color = '#385723';
             } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
+                wakeLockStatus.textContent = 'Screen Lock: Failed';
             }
+        } else {
+            wakeLockStatus.textContent = 'Screen Lock: Unsupported';
         }
+    }
 
-        // Release Lock
-        function releaseWakeLock() {
-            if (wakeLock !== null) {
-                wakeLock.release();
+    function releaseWakeLock() {
+        if (wakeLock) {
+            wakeLock.release().then(() => {
                 wakeLock = null;
-            }
+                wakeLockStatus.textContent = 'Screen Lock: Inactive';
+                wakeLockStatus.style.backgroundColor = '#e8eef5';
+                wakeLockStatus.style.color = '#557093';
+            });
+        }
+    }
+
+    function updateDisplays() {
+        const currentLong = Math.max(0, DEFAULT_LONG - totalSeconds);
+        // Short timer counts down 10 to 1, then resets
+        const currentShort = DEFAULT_SHORT - (totalSeconds % DEFAULT_SHORT);
+        
+        longDisplay.textContent = currentLong;
+        shortDisplay.textContent = currentLong === 0 ? 0 : currentShort;
+    }
+
+    function tick() {
+        totalSeconds++;
+        updateDisplays();
+
+        const currentLong = DEFAULT_LONG - totalSeconds;
+
+        if (currentLong <= 0) {
+            playAlarm();
+            stopTimer();
+            return;
         }
 
-        // Timer Execution
-        function startTimer() {
-            if (countdownInterval) return;
-
-            // Initialize audio context directly inside user click handler to satisfy browser policy
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
-            // Trigger Wake Lock to bypass background processing rules
-            requestWakeLock();
-
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-
-            countdownInterval = setInterval(() => {
-                timeLeft--;
-                display.textContent = timeLeft;
-
-                if (timeLeft <= 0) {
-                    playSignal();
-                    timeLeft = 10; 
-                    display.textContent = timeLeft;
-                }
-            }, 1000);
+        if (totalSeconds % DEFAULT_SHORT === 0) {
+            playBeep();
         }
+    }
 
-        function stopTimer() {
-            clearInterval(countdownInterval);
-            countdownInterval = null;
-            timeLeft = 10;
-            display.textContent = timeLeft;
+    function startTimer() {
+        initAudio();
+        requestWakeLock();
+        
+        totalSeconds = 0;
+        updateDisplays();
+        
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        
+        timerInterval = setInterval(tick, 1000);
+    }
 
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
+    function stopTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        
+        releaseWakeLock();
+    }
 
-            releaseWakeLock();
+    startBtn.addEventListener('click', startTimer);
+    stopBtn.addEventListener('click', stopTimer);
+
+    // Handle visibility change to maintain wake lock if app minimized/restored
+    document.addEventListener('visibilitychange', async () => {
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            await requestWakeLock();
         }
-
-        // Event Listeners
-        startBtn.addEventListener('click', startTimer);
-        stopBtn.addEventListener('click', stopTimer);
-
-        // Re-request lock if browser minimizes and restores
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                await requestWakeLock();
-            }
-        });
-    </script>
+    });
+</script>
 
 </body>
 </html>
