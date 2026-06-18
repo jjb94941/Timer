@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interval Timer V5</title>
+    <title>Interval Timer V6</title>
     <style>
         :root {
             --bg-color: #f7ede2;
@@ -127,7 +127,7 @@
 <body>
 
 <div class="card">
-    <h1>⏱ Interval Timer V5</h1>
+    <h1>⏱ Interval Timer V6</h1>
     <div class="description">Tap the numbers to change them.</div>
 
     <div class="timer-container">
@@ -146,7 +146,7 @@
         <button id="stopBtn" disabled>Stop</button>
     </div>
 
-    <div id="statusPill" class="status-pill">Ready</div>
+    <div id="statusPill" class="status-pill">Tap Start to begin</div>
 </div>
 
 <script>
@@ -155,9 +155,11 @@
 
     let totalSeconds   = 0;
     let timerInterval  = null;
+    let keepAlive      = null;
     let wakeLock       = null;
     let LONG_VAL       = DEFAULT_LONG;
     let SHORT_VAL      = DEFAULT_SHORT;
+    let audioReady     = false;
 
     let audioCtx       = null;
     let silentSource   = null;
@@ -168,24 +170,46 @@
     const shortInput   = document.getElementById('shortDisplay');
     const statusPill   = document.getElementById('statusPill');
 
+    // ── Audio init — must happen inside a user gesture ─────────────────────────
+    // We init on the very first touch/click anywhere on the page so the
+    // AudioContext is established and running before Start is pressed.
+
     function initAudio() {
         if (audioCtx) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Auto-resume if Android suspends the context
         audioCtx.onstatechange = () => {
-            if (audioCtx.state === 'suspended' && timerInterval) {
-                audioCtx.resume();
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         };
+
+        // Start the silent loop immediately so Android never sees an idle context
+        audioCtx.resume().then(() => {
+            startSilentLoop();
+            audioReady = true;
+            setStatus('Tap Start to begin');
+        });
+
+        // Belt-and-suspenders: poke the context every 5 s while a timer is running
+        keepAlive = setInterval(() => {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }, 5000);
     }
 
+    // Initialise audio on the first user interaction with the page
+    document.addEventListener('touchstart', initAudio, { once: true });
+    document.addEventListener('mousedown',  initAudio, { once: true });
+
+    // ── Silent loop — keeps AudioContext alive on Android screen-off ───────────
+
     function startSilentLoop() {
-        if (!audioCtx) return;
+        if (!audioCtx || silentSource) return;
         const buffer = audioCtx.createBuffer(1, Math.ceil(audioCtx.sampleRate * 0.1), audioCtx.sampleRate);
         silentSource = audioCtx.createBufferSource();
         silentSource.buffer = buffer;
         silentSource.loop   = true;
         const gain = audioCtx.createGain();
-        gain.gain.value = 0.001;
+        gain.gain.value = 0.001;   // near-silent but not zero (browsers may optimise away 0)
         silentSource.connect(gain);
         gain.connect(audioCtx.destination);
         silentSource.start();
@@ -198,6 +222,8 @@
             silentSource = null;
         }
     }
+
+    // ── Sound playback ─────────────────────────────────────────────────────────
 
     function playSound(frequency, duration, type = 'sine') {
         if (!audioCtx) return;
@@ -220,14 +246,18 @@
         setTimeout(() => playSound(880, 0.9, 'triangle'), 250);
     }
 
+    // ── Wake lock ──────────────────────────────────────────────────────────────
+
     async function requestWakeLock() {
-        if (!('wakeLock' in navigator)) { setStatus('Screen lock unsupported'); return; }
+        if (!('wakeLock' in navigator)) { setStatus('Running… (no wake lock)'); return; }
         try {
             wakeLock = await navigator.wakeLock.request('screen');
-            setStatus('Screen lock active ✓');
-            wakeLock.addEventListener('release', () => setStatus('Screen lock released'));
+            setStatus('Running…');
+            wakeLock.addEventListener('release', () => {
+                if (timerInterval) setStatus('Running… (lock released)');
+            });
         } catch (err) {
-            setStatus('Screen lock failed');
+            setStatus('Running… (lock failed)');
         }
     }
 
@@ -242,6 +272,8 @@
         }
     });
 
+    // ── Display ────────────────────────────────────────────────────────────────
+
     function updateDisplays() {
         const remaining = Math.max(0, LONG_VAL - totalSeconds);
         const interval  = remaining === 0 ? 0 : SHORT_VAL - (totalSeconds % SHORT_VAL);
@@ -251,13 +283,15 @@
 
     function setStatus(msg) { statusPill.textContent = msg; }
 
+    // ── Timer logic ────────────────────────────────────────────────────────────
+
     function tick() {
         totalSeconds++;
         updateDisplays();
         const remaining = LONG_VAL - totalSeconds;
         if (remaining <= 0) {
             playAlarm();
-            totalSeconds = 0;
+            totalSeconds = 0;      // auto-restart
             updateDisplays();
             setStatus('Running…');
             return;
@@ -270,9 +304,13 @@
         SHORT_VAL = Math.max(1, parseInt(shortInput.value) || DEFAULT_SHORT);
         longInput.disabled  = true;
         shortInput.disabled = true;
+
+        // If audio wasn't initialised by an earlier touch, do it now
         initAudio();
+
         audioCtx.resume().then(() => {
-            startSilentLoop();
+            // Restart silent loop if it was stopped
+            if (!silentSource) startSilentLoop();
             requestWakeLock();
             totalSeconds = 0;
             updateDisplays();
@@ -287,6 +325,7 @@
         clearInterval(timerInterval);
         timerInterval = null;
         stopSilentLoop();
+        if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
         releaseWakeLock();
         longInput.disabled  = false;
         shortInput.disabled = false;
@@ -294,7 +333,7 @@
         shortInput.value    = SHORT_VAL;
         startBtn.disabled = false;
         stopBtn.disabled  = true;
-        if (statusPill.textContent === 'Running…') setStatus('Stopped');
+        setStatus('Stopped');
     }
 
     startBtn.addEventListener('click', startTimer);
